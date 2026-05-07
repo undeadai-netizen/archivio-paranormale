@@ -6,8 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Inserisci qui la tua chiave Groq
-const groq = new Groq({ apiKey: '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' });
+// Usa la variabile d'ambiente di Render (scelta consigliata)
+const apiKey = process.env.GROQ_API_KEY || "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";
+
+const groq = new Groq({ apiKey: apiKey });
 
 const titoliPubblici = [
     { titolo: "Il Fantasma di Poveglia" },
@@ -21,15 +23,21 @@ app.get('/titoli', (req, res) => res.json({ sinistra: titoliPubblici }));
 
 app.post('/genera-storia', async (req, res) => {
     const { titolo } = req.body;
+    console.log("Richiesta ricevuta per:", titolo);
+
     try {
         const completion = await groq.chat.completions.create({
-            messages: [{ role: "user", content: `Scrivi un rapporto militare segreto e inquietante sul caso: ${titolo}. Sii molto dettagliato e usa un linguaggio tecnico.` }],
+            messages: [
+                { role: "system", content: "Sei un computer militare degli anni '80. Scrivi rapporti paranormali inquietanti, tecnici e dettagliati. Usa paragrafi e vai a capo spesso." },
+                { role: "user", content: `Analisi reperto: ${titolo}` }
+            ],
             model: "llama3-8b-8192",
         });
         res.json({ testo: completion.choices[0].message.content });
-    } catch (e) {
-        res.json({ testo: "ERRORE CRITICO: Impossibile contattare l'IA. Riprovare." });
+    } catch (error) {
+        console.error("ERRORE GROQ:", error.message);
+        res.json({ testo: "ATTENZIONE: Collegamento satellitare interrotto. Caricamento file locale...\n\nRilevate tracce ectoplasmiche residue. Il sito è stato isolato. Non procedere senza protezione termica." });
     }
 });
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 3000, () => console.log("Server Operativo"));
