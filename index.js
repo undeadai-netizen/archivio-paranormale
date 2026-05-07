@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Gestione Chiave API: Usa quella di Render o quella manuale
+// Incolla qui la tua chiave gsk_... se non la usi nelle variabili di Render
 const apiKey = process.env.GROQ_API_KEY || "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";
 const groq = new Groq({ apiKey: apiKey });
 
@@ -18,28 +18,24 @@ const titoliPubblici = [
     { titolo: "Area 51 - Livello 4" }
 ];
 
-// Rotte
 app.get('/titoli', (req, res) => res.json({ sinistra: titoliPubblici }));
 
 app.post('/genera-storia', async (req, res) => {
     const { titolo } = req.body;
-    console.log("Richiesta ricevuta per:", titolo);
-
     try {
         const completion = await groq.chat.completions.create({
             messages: [
-                { role: "system", content: "Sei un computer militare degli anni '80. Scrivi rapporti paranormali inquietanti, tecnici e dettagliati. Vai a capo spesso e usa un linguaggio crudo." },
-                { role: "user", content: `Analisi reperto: ${titolo}` }
+                { role: "system", content: "Sei un archivista paranormale. Scrivi rapporti tecnici e inquietanti con molti dettagli. Usa paragrafi." },
+                { role: "user", content: `Rapporto su: ${titolo}` }
             ],
             model: "llama3-8b-8192",
         });
         res.json({ testo: completion.choices[0].message.content });
     } catch (error) {
-        console.error("ERRORE GROQ:", error.message);
-        // Piano B: Testo di emergenza se l'IA fallisce
-        res.json({ testo: "ATTENZIONE: Collegamento satellitare interrotto.\n\nCaricamento file locale...\n\nRilevate tracce ectoplasmiche residue nel settore. Il sito è stato isolato per contenimento bio-organico. Non procedere senza protezione termica di Livello 5." });
+        // Se Groq fallisce, il sito non si rompe ma mostra questo:
+        res.json({ testo: "ATTENZIONE: Connessione satellitare instabile.\n\nAnalisi preliminare: Rilevate fluttuazioni energetiche nel settore. Il sito è isolato. Non procedere senza autorizzazione." });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server Operativo sulla porta ${PORT}`));
+app.listen(PORT, () => console.log("Sistema OmbreSync Attivo"));
