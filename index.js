@@ -3,11 +3,16 @@ const cors = require('cors');
 const { Groq } = require('groq-sdk');
 
 const app = express();
-app.use(cors());
+
+// CONFIGURAZIONE CORS AGGIORNATA
+app.use(cors({
+    origin: '*', // Permette chiamate da qualsiasi origine (anche il tuo file locale)
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
-// Legge la chiave SOLO dalle impostazioni di Render (Environment Variables)
-// Così GitHub non ti darà mai più errori di sicurezza!
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 app.get('/titoli', (req, res) => {
@@ -25,14 +30,14 @@ app.post('/genera-storia', async (req, res) => {
     try {
         const completion = await groq.chat.completions.create({
             messages: [
-                { role: "system", content: "Sei un archivista paranormale. Scrivi rapporti tecnici e inquietanti." },
-                { role: "user", content: `Analisi caso: ${titolo}` }
+                { role: "system", content: "Sei un archivista. Scrivi rapporti dettagliati." },
+                { role: "user", content: `Analisi: ${titolo}` }
             ],
             model: "llama3-8b-8192",
         });
         res.json({ testo: completion.choices[0].message.content });
     } catch (e) {
-        res.json({ testo: "SISTEMA ONLINE - IA IN ATTESA DI CHIAVE VALIDA SU RENDER." });
+        res.status(500).json({ testo: "ERRORE IA: Controlla la chiave su Render." });
     }
 });
 
