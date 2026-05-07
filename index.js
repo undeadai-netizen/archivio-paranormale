@@ -4,7 +4,7 @@ const { Groq } = require('groq-sdk');
 
 const app = express();
 
-// CONFIGURAZIONE CORS TOTALE
+// Configurazione CORS per permettere la connessione dal tuo PC
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'OPTIONS'],
@@ -13,61 +13,69 @@ app.use(cors({
 
 app.use(express.json());
 
-// Inizializzazione sicura della chiave
+// Inizializzazione Groq con la variabile d'ambiente di Render
 const apiKey = process.env.GROQ_API_KEY;
 const groq = new Groq({ apiKey: apiKey || 'MISSING' });
 
-const titoliPubblici = [
+// Database Titoli - Settore A (Sinistra)
+const titoliSettoreA = [
     { titolo: "Il Fantasma di Poveglia" },
     { titolo: "Le Catacombe di Parigi" },
     { titolo: "Il Castello di Edimburgo" },
-    { titolo: "Foresta di Aokigahara" },
-    { titolo: "Area 51 - Livello 4" }
+    { titolo: "Bunker Segreto Berlino" },
+    { titolo: "L'Isola delle Bambole" },
+    { titolo: "La Torre di Londra" }
 ];
 
-// Rotta test per verificare se il server risponde
+// Database Titoli - Settore B (Destra)
+const titoliSettoreB = [
+    { titolo: "Foresta di Aokigahara" },
+    { titolo: "Area 51 - Livello 4" },
+    { titolo: "Centrale di Chernobyl" },
+    { titolo: "Faro di Eilean Mor" },
+    { titolo: "Hotel Stanley" },
+    { titolo: "Base Sotterranea Dulce" }
+];
+
+// Rotta per inviare entrambi i settori al sito
 app.get('/titoli', (req, res) => {
-    res.json({ sinistra: titoliPubblici });
+    res.json({ 
+        sinistra: titoliSettoreA, 
+        destra: titoliSettoreB 
+    });
 });
 
-// Rotta principale con Diagnostica Errori
+// Rotta per generare la storia con il modello aggiornato
 app.post('/genera-storia', async (req, res) => {
     const { titolo } = req.body;
 
-    if (!apiKey || apiKey === '') {
-        return res.json({ testo: "ERRORE CRITICO: La variabile GROQ_API_KEY non è stata impostata su Render. Vai in Dashboard -> Environment e aggiungila." });
+    if (!apiKey || apiKey === 'MISSING') {
+        return res.json({ testo: "ERRORE: Chiave API mancante su Render." });
     }
 
     try {
         const completion = await groq.chat.completions.create({
             messages: [
-                { role: "system", content: "Sei un computer dell'intelligence. Scrivi rapporti paranormali brevi e inquietanti." },
-                { role: "user", content: `Analisi: ${titolo}` }
+                { 
+                    role: "system", 
+                    content: "Sei un computer militare dell'intelligence paranormale. Scrivi rapporti tecnici, inquietanti e realistici. Usa un tono freddo. Vai a capo dopo ogni paragrafo per leggibilità." 
+                },
+                { role: "user", content: `Analisi del soggetto: ${titolo}` }
             ],
-            model: "llama-3.3-70b-versatile",
+            model: "llama-3.3-70b-versatile", // Modello aggiornato e funzionante
         });
 
         res.json({ testo: completion.choices[0].message.content });
 
     } catch (error) {
-        // Questo ti dirà l'errore esatto fornito da Groq
-        console.error("Dettaglio Errore:", error.message);
-        
-        let messaggioUser = `ERRORE RILEVATO DAL SERVER:\n\n"${error.message}"\n\n`;
-        
-        if (error.message.includes("401")) {
-            messaggioUser += "Suggerimento: La chiave API è invalida. GitHub potrebbe averla disattivata. Generane una NUOVA su Groq e aggiorna Render.";
-        } else if (error.message.includes("429")) {
-            messaggioUser += "Suggerimento: Troppe richieste. Aspetta un minuto.";
-        } else {
-            messaggioUser += "Suggerimento: Controlla che la chiave su Render sia copiata senza spazi bianchi.";
-        }
-
-        res.json({ testo: messaggioUser });
+        console.error("Errore:", error.message);
+        res.json({ 
+            testo: `ERRORE DI SISTEMA: ${error.message}. Verifica la chiave su Render.` 
+        });
     }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server v6.3 Live sulla porta ${PORT}`);
+    console.log(`Archivio Ombre v8.0 attivo sulla porta ${PORT}`);
 });
