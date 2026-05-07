@@ -6,6 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Se Groq fallisce o la chiave non è impostata, useremo un piano B nel codice
 const apiKey = process.env.GROQ_API_KEY || "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";
 const groq = new Groq({ apiKey: apiKey });
 
@@ -24,15 +25,17 @@ app.post('/genera-storia', async (req, res) => {
     try {
         const completion = await groq.chat.completions.create({
             messages: [
-                { role: "system", content: "Sei un archivista paranormale. Scrivi rapporti tecnici e inquietanti. Vai a capo spesso." },
-                { role: "user", content: `Rapporto su: ${titolo}` }
+                { role: "system", content: "Sei un archivista paranormale degli anni 80. Scrivi rapporti tecnici e spaventosi." },
+                { role: "user", content: `Analisi reperto: ${titolo}` }
             ],
             model: "llama3-8b-8192",
         });
         res.json({ testo: completion.choices[0].message.content });
-    } catch (error) {
-        res.json({ testo: "SISTEMA DI EMERGENZA:\n\nConnessione instabile. Rilevate tracce anomale nel settore." });
+    } catch (e) {
+        // PIANO B: Se Groq non va, il server risponde comunque con questo!
+        res.json({ testo: "ATTENZIONE: Collegamento satellitare Groq interrotto.\n\nAnalisi preliminare del sensore: Rilevate fluttuazioni ectoplasmiche di Classe 4. Il sito è stato isolato per contenimento bio-organico." });
     }
 });
 
-app.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Sistema Live"));
