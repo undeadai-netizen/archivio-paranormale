@@ -1,67 +1,35 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
+const { Groq } = require('groq-sdk');
 
-// Configurazione Middleware
-app.use(cors()); // Sblocca la comunicazione con Netlify
+const app = express();
+app.use(cors());
 app.use(express.json());
 
-// 1. ROTTA DI TEST (Risolve l'errore "Cannot GET /")
-app.get('/', (req, res) => {
-    res.send("SISTEMA OMBRESYNC ONLINE - DATABASE PRONTO");
-});
+// Inserisci qui la tua chiave Groq
+const groq = new Groq({ apiKey: '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' });
 
-// 2. DATABASE TITOLI PUBBLICI
 const titoliPubblici = [
     { titolo: "Il Fantasma di Poveglia" },
     { titolo: "Le Catacombe di Parigi" },
     { titolo: "Il Castello di Edimburgo" },
-    { titolo: "La Torre di Londra" },
-    { titolo: "Il Mistero di Stonehenge" },
-    { titolo: "L'Anomalia del Monte Nero" },
-    { titolo: "Area 51 - Livello 4" },
-    { titolo: "Il Triangolo delle Bermuda" },
     { titolo: "Foresta di Aokigahara" },
-    { titolo: "Incidente del Passo Dyatlov" },
-    { titolo: "Le Linee di Nazca" },
-    { titolo: "Rovine di Mohenjo-Daro" }
+    { titolo: "Area 51 - Livello 4" }
 ];
 
-// 3. DATABASE TITOLI PREMIUM
-const titoliPremium = [
-    { titolo: "Progetto Abyss" },
-    { titolo: "Soggetto 001" },
-    { titolo: "Il Codice Omega" },
-    { titolo: "Reperto X-32" },
-    { titolo: "Ultimatum Terra" },
-    { titolo: "Origine Oscura" }
-];
+app.get('/titoli', (req, res) => res.json({ sinistra: titoliPubblici }));
 
-// 4. ROTTE PER IL FRONTEND
-app.get('/titoli', (req, res) => {
-    res.json({ sinistra: titoliPubblici });
-});
-
-app.get('/titoli-premium', (req, res) => {
-    res.json(titoliPremium);
-});
-
-// 5. GENERAZIONE STORIA (IA)
 app.post('/genera-storia', async (req, res) => {
     const { titolo } = req.body;
-    
-    // Qui puoi inserire la tua logica Groq. 
-    // Per ora ti do una risposta di test sicura:
-    const testoIA = `ANALISI SATELLITARE COMPLETATA: ${titolo}. 
-    I sensori rilevano anomalie termiche e fluttuazioni elettromagnetiche costanti. 
-    L'area è stata dichiarata zona rossa. Non tentare l'accesso fisico. 
-    Documentazione recuperata dai server criptati conferma la presenza di entità di Classe 4.`;
-
-    res.json({ testo: testoIA });
+    try {
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: "user", content: `Scrivi un rapporto militare segreto e inquietante sul caso: ${titolo}. Sii molto dettagliato e usa un linguaggio tecnico.` }],
+            model: "llama3-8b-8192",
+        });
+        res.json({ testo: completion.choices[0].message.content });
+    } catch (e) {
+        res.json({ testo: "ERRORE CRITICO: Impossibile contattare l'IA. Riprovare." });
+    }
 });
 
-// Avvio Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server attivo sulla porta ${PORT}`);
-});
+app.listen(process.env.PORT || 3000);
