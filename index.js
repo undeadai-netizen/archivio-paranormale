@@ -6,9 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Questo pezzo legge la chiave sia da Render che dal codice
-const CHIAVE = process.env.GROQ_API_KEY || "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";
-const groq = new Groq({ apiKey: CHIAVE });
+// Legge la chiave SOLO dalle impostazioni di Render (Environment Variables)
+// Così GitHub non ti darà mai più errori di sicurezza!
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 app.get('/titoli', (req, res) => {
     res.json({ sinistra: [
@@ -25,15 +25,14 @@ app.post('/genera-storia', async (req, res) => {
     try {
         const completion = await groq.chat.completions.create({
             messages: [
-                { role: "system", content: "Sei un computer militare. Scrivi rapporti paranormali inquietanti e dettagliati. Vai a capo dopo ogni paragrafo." },
-                { role: "user", content: `Analisi: ${titolo}` }
+                { role: "system", content: "Sei un archivista paranormale. Scrivi rapporti tecnici e inquietanti." },
+                { role: "user", content: `Analisi caso: ${titolo}` }
             ],
             model: "llama3-8b-8192",
         });
         res.json({ testo: completion.choices[0].message.content });
     } catch (e) {
-        console.error(e);
-        res.json({ testo: "ERRORE DI AUTENTICAZIONE IA.\n\nControlla la chiave GSK nelle impostazioni di Render." });
+        res.json({ testo: "SISTEMA ONLINE - IA IN ATTESA DI CHIAVE VALIDA SU RENDER." });
     }
 });
 
