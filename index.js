@@ -44,7 +44,7 @@ app.post('/genera-storia', async (req, res) => {
                 { role: "system", content: "Sei un computer dell'intelligence. Scrivi rapporti paranormali brevi e inquietanti." },
                 { role: "user", content: `Analisi: ${titolo}` }
             ],
-            model: "llama3-8b-8192",
+            model: "llama-3.3-70b-versatile",
         });
 
         res.json({ testo: completion.choices[0].message.content });
