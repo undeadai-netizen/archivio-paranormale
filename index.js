@@ -15,75 +15,54 @@ app.use(express.json());
 const apiKey = process.env.GROQ_API_KEY;
 const groq = new Groq({ apiKey: apiKey || 'MISSING' });
 
-// Database Titoli - Settore A (Sinistra) - 12 STORIE
+// Database Titoli - 12 per lato
 const titoliSettoreA = [
-    { titolo: "Il Fantasma di Poveglia" }, 
-    { titolo: "Le Catacombe di Parigi" },
-    { titolo: "Il Castello di Edimburgo" }, 
-    { titolo: "Bunker Segreto Berlino" },
-    { titolo: "L'Isola delle Bambole" }, 
-    { titolo: "La Torre di Londra" },
-    { titolo: "Castello di Bran (Dracula)" }, 
-    { titolo: "Abbazia di Thelema" },
-    { titolo: "Il Manicomio di Beelitz" }, 
-    { titolo: "Villa De Vecchi" },
-    { titolo: "Cimitero di Highgate" }, 
-    { titolo: "Il Borgo di Craco" }
+    { titolo: "Il Fantasma di Poveglia" }, { titolo: "Le Catacombe di Parigi" },
+    { titolo: "Il Castello di Edimburgo" }, { titolo: "Bunker Segreto Berlino" },
+    { titolo: "L'Isola delle Bambole" }, { titolo: "La Torre di Londra" },
+    { titolo: "Castello di Bran" }, { titolo: "Abbazia di Thelema" },
+    { titolo: "Il Manicomio di Beelitz" }, { titolo: "Villa De Vecchi" },
+    { titolo: "Cimitero di Highgate" }, { titolo: "Il Borgo di Craco" }
 ];
 
-// Database Titoli - Settore B (Destra) - 12 STORIE
 const titoliSettoreB = [
-    { titolo: "Foresta di Aokigahara" }, 
-    { titolo: "Area 51 - Livello 4" },
-    { titolo: "Centrale di Chernobyl" }, 
-    { titolo: "Faro di Eilean Mor" },
-    { titolo: "Hotel Stanley" }, 
-    { titolo: "Base Sotterranea Dulce" },
-    { titolo: "Triangolo delle Bermuda" }, 
-    { titolo: "La Valle dei Re" },
-    { titolo: "Il Sanatorio di Waverly Hills" }, 
-    { titolo: "Isola di Pasqua" },
-    { titolo: "Il Pozzo di Darvaza" }, 
-    { titolo: "Alcatraz - Cella 14D" }
+    { titolo: "Foresta di Aokigahara" }, { titolo: "Area 51 - Livello 4" },
+    { titolo: "Centrale di Chernobyl" }, { titolo: "Faro di Eilean Mor" },
+    { titolo: "Hotel Stanley" }, { titolo: "Base Sotterranea Dulce" },
+    { titolo: "Triangolo delle Bermuda" }, { titolo: "La Valle dei Re" },
+    { titolo: "Sanatorio Waverly Hills" }, { titolo: "Isola di Pasqua" },
+    { titolo: "Il Pozzo di Darvaza" }, { titolo: "Alcatraz - Cella 14D" }
 ];
 
-// Rotta per i titoli
 app.get('/titoli', (req, res) => {
-    res.json({ 
-        sinistra: titoliSettoreA, 
-        destra: titoliSettoreB 
-    });
+    res.json({ sinistra: titoliSettoreA, destra: titoliSettoreB });
 });
 
-// Rotta per la generazione storia
 app.post('/genera-storia', async (req, res) => {
     const { titolo } = req.body;
-
-    if (!apiKey || apiKey === 'MISSING') {
-        return res.json({ testo: "ERRORE: Chiave API non configurata." });
-    }
+    if (!apiKey || apiKey === 'MISSING') return res.json({ testo: "Errore Configurazione API." });
 
     try {
         const completion = await groq.chat.completions.create({
             messages: [
                 { 
                     role: "system", 
-                    content: "Sei un computer militare dell'intelligence paranormale. Scrivi rapporti tecnici, inquietanti e realistici. Usa un tono freddo e distaccato. Vai a capo spesso." 
+                    content: `Sei un antico archivista dell'occulto. Scrivi cronache horror lunghe, dettagliate e letterarie. 
+                    Usa uno stile gotico, descrittivo e prolisso (minimo 1000 parole). 
+                    Dividi la storia in capitoli: L'ORIGINE, LA MALEDIZIONE, IL RITROVAMENTO, L'ORRORE FINALE. 
+                    Descrivi odori, suoni e sensazioni psicologiche in modo profondo.` 
                 },
-                { role: "user", content: `Analisi del soggetto: ${titolo}` }
+                { role: "user", content: `Scrivi la cronaca completa e dettagliata su: ${titolo}` }
             ],
             model: "llama-3.3-70b-versatile",
+            max_tokens: 4096, // Massimo consentito per storie lunghissime
+            temperature: 0.7
         });
-
         res.json({ testo: completion.choices[0].message.content });
-
     } catch (error) {
-        console.error("Errore Groq:", error.message);
-        res.json({ testo: `ERRORE DI SISTEMA: ${error.message}` });
+        res.status(500).json({ testo: "L'oscurità ha interrotto la connessione." });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server v12 Live sulla porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server v16 Live sulla porta ${PORT}`));
