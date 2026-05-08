@@ -64,5 +64,7 @@ app.post('/genera-storia', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server v16 Live sulla porta ${PORT}`));
+const port = process.env.PORT || 8080;
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server in ascolto sulla porta ${port}`);
+});
